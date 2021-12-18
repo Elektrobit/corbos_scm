@@ -1,0 +1,15 @@
+<service name="corbos_scm">
+  <summary>Compose Corbos Source into OBS package sources</summary>
+  <description>The service takes packages sources from the Corbos Linux project and commits them to build in a OBS project</description>
+  <parameter name="git">
+    <description>Git clone location to fetch packages sources</description>
+    <required/>
+  </parameter>
+  <parameter name="package">
+    <description>Path to package relative to git root</description>
+    <required/>
+  </parameter>
+  <parameter name="branch">
+    <description>Branch in git source [default: master]</description>
+  </parameter>
+</service>

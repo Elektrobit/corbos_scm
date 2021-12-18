@@ -1,0 +1,13 @@
+graft corbos_scm
+graft package
+
+include README.rst
+include LICENSE
+include tox.ini
+include .bumpversion.cfg
+include .virtualenv.requirements.txt
+include .virtualenv.dev-requirements.txt
+
+include .coverage*
+
+global-exclude *.py[cod] __pycache__

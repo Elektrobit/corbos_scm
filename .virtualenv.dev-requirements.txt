@@ -1,0 +1,30 @@
+#
+# Requirement files for Python Virtual Development Environments
+#
+
+-r .virtualenv.requirements.txt
+
+# setuptools for pypi upload
+setuptools
+
+# python unit testing framework
+pytest
+pytest-cov
+pytest-xdist
+
+# Rolling backport of unittest.mock for all Pythons
+mock
+
+# Version-bump your software with a single command!
+bumpversion
+
+# Python style guide checker
+flake8
+
+# for building documentation
+sphinx
+sphinx_rtd_theme
+
+# Python static type checker
+mypy
+types-docopt
