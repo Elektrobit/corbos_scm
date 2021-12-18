@@ -39,29 +39,121 @@ Options:
         At the time the service is called through the OBS API
         this option is set.
 """
+import os
+import shutil
+import re
+from pathlib import Path
+from typing import NamedTuple
+from tempfile import TemporaryDirectory
 import docopt
 
 from corbos_scm.version import __version__
-from corbos_scm.exceptions import exception_handler
+from corbos_scm.command import Command
+from corbos_scm.exceptions import (
+    exception_handler,
+    CSCMDebianSourceNotFound,
+    CSCMDebianChangelogFormatNotDetected
+)
+
+package_type = NamedTuple(
+    'package_type', [
+        ('name', str),
+        ('upstream_version', str),
+        ('debian_revision', str),
+        ('target', str)
+    ]
+)
 
 
 @exception_handler
 def main() -> None:
     args = docopt.docopt(__doc__, version=__version__)
 
-    print(args)
+    if not os.path.exists(args['--outdir']):
+        Path(args['--outdir']).mkdir(parents=True, exist_ok=True)
 
-    # 1. Find version in debian/changelog
-    #    Example: "xsnow (1:3.3.2-1) unstable; urgency=low"
-    #    -> xsnow-3.3.2/... (xsnow_3.3.2.orig.tar.gz)
-    #    -> debian/... (xsnow_3.3.2-1.debian.tar.xz)
+    temp_git_dir = TemporaryDirectory(prefix='corbos_scm.')
+    Command.run(
+        ['git', 'clone', args['--git'], temp_git_dir.name]
+    )
+    if args['--branch']:
+        Command.run(
+            ['git', '-C', temp_git_dir.name, 'checkout', args['--branch']]
+        )
 
-    # 2. Prepare source checkout into tar'able directories
-    #    -> xsnow-3.3.2/
-    #    -> debian/
-    #    And tar them up
+    package_dir = os.path.join(temp_git_dir.name, args['--package'])
+    debian_dir = os.path.join(package_dir, 'debian')
 
-    # 3. Create DSC (xsnow_3.3.2-1.dsc) file
+    if not os.path.isdir(debian_dir):
+        raise CSCMDebianSourceNotFound(
+            f'No debian dir in source: {debian_dir!r}'
+        )
+
+    # package_dir = '/home/ms/Project/cloud-builder-packages/projects/Corbos/xsnow'
+    # debian_dir = '/home/ms/Project/cloud-builder-packages/projects/Corbos/xsnow/debian'
+
+    package_meta = get_package_meta(debian_dir)
+
+    create_dsc_file(
+        debian_dir, args['--outdir']
+    )
+    create_source_tarballs(
+        package_dir, package_meta, args['--outdir']
+    )
+
+
+def get_package_meta(debian_dir: str) -> package_type:
+    with open(f'{debian_dir}/changelog') as changelog:
+        latest = changelog.readline().strip()
+    changelog_format = re.match(
+        r'([a-zA-Z0-9_\-\.]+) \((.*)\) (.*);', latest
+    )
+    if changelog_format:
+        debian_revision = changelog_format.group(2).split(':').pop()
+        upstream_version = debian_revision.split('-')[0]
+        return package_type(
+            name=changelog_format.group(1),
+            target=changelog_format.group(3),
+            debian_revision=debian_revision,
+            upstream_version=upstream_version
+        )
+    else:
+        raise CSCMDebianChangelogFormatNotDetected(
+            'Unknown format: {latest!r}'
+        )
+
+
+def create_dsc_file(debian_dir: str, outdir: str) -> None:
+    # TODO
+    # Create DSC (xsnow_3.3.2-1.dsc) file
     #    -> read contents of debian/control, some data there can be
     #       added 1:1, other data needs to be created in different
     #       format. Create shasums
+    pass
+
+
+def create_source_tarballs(
+    package_dir: str, package: package_type, outdir: str
+) -> None:
+    parent_dir = os.path.dirname(package_dir)
+    symlink_name = f'{parent_dir}/{package.name}-{package.upstream_version}'
+    os.symlink(
+        package_dir, symlink_name
+    )
+    shutil.move(
+        f'{package_dir}/debian', parent_dir
+    )
+    Command.run(
+        [
+            'tar', '-C', parent_dir, '-h', '-cJf',
+            f'{outdir}/{package.name}_{package.debian_revision}.debian.tar.xz',
+            'debian'
+        ]
+    )
+    Command.run(
+        [
+            'tar', '-C', parent_dir, '-h', '-czf',
+            f'{outdir}/{package.name}_{package.upstream_version}.orig.tar.gz',
+            f'{package.name}-{package.upstream_version}'
+        ]
+    )
