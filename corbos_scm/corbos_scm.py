@@ -42,8 +42,10 @@ Options:
 import docopt
 
 from corbos_scm.version import __version__
+from corbos_scm.exceptions import exception_handler
 
 
+@exception_handler
 def main() -> None:
     args = docopt.docopt(__doc__, version=__version__)
 
