@@ -48,3 +48,18 @@ def main() -> None:
     args = docopt.docopt(__doc__, version=__version__)
 
     print(args)
+
+    # 1. Find version in debian/changelog
+    #    Example: "xsnow (1:3.3.2-1) unstable; urgency=low"
+    #    -> xsnow-3.3.2/... (xsnow_3.3.2.orig.tar.gz)
+    #    -> debian/... (xsnow_3.3.2-1.debian.tar.xz)
+
+    # 2. Prepare source checkout into tar'able directories
+    #    -> xsnow-3.3.2/
+    #    -> debian/
+    #    And tar them up
+
+    # 3. Create DSC (xsnow_3.3.2-1.dsc) file
+    #    -> read contents of debian/control, some data there can be
+    #       added 1:1, other data needs to be created in different
+    #       format. Create shasums
