@@ -40,10 +40,13 @@ Options:
         this option is set.
 """
 import os
+import yaml
 import shutil
 import re
 from pathlib import Path
-from typing import NamedTuple
+from typing import (
+    NamedTuple, Dict, Union, List
+)
 from tempfile import TemporaryDirectory
 import docopt
 
@@ -58,6 +61,7 @@ from corbos_scm.exceptions import (
 package_type = NamedTuple(
     'package_type', [
         ('name', str),
+        ('epoch', str),
         ('upstream_version', str),
         ('debian_revision', str),
         ('target', str)
@@ -89,16 +93,14 @@ def main() -> None:
             f'No debian dir in source: {debian_dir!r}'
         )
 
-    # package_dir = '/home/ms/Project/cloud-builder-packages/projects/Corbos/xsnow'
-    # debian_dir = '/home/ms/Project/cloud-builder-packages/projects/Corbos/xsnow/debian'
-
     package_meta = get_package_meta(debian_dir)
 
-    create_dsc_file(
-        debian_dir, args['--outdir']
+    dsc_file = create_dsc_file(
+        debian_dir, package_meta, args['--outdir']
     )
+
     create_source_tarballs(
-        package_dir, package_meta, args['--outdir']
+        package_dir, package_meta, dsc_file, args['--outdir']
     )
 
 
@@ -109,11 +111,17 @@ def get_package_meta(debian_dir: str) -> package_type:
         r'([a-zA-Z0-9_\-\.]+) \((.*)\) (.*);', latest
     )
     if changelog_format:
+        debian_epoch = '0'
+        debian_revision_and_epoch = changelog_format.group(2).split(':')
+        debian_revision = debian_revision_and_epoch.pop()
+        if debian_revision_and_epoch:
+            debian_epoch = debian_revision_and_epoch[0]
         debian_revision = changelog_format.group(2).split(':').pop()
         upstream_version = debian_revision.split('-')[0]
         return package_type(
             name=changelog_format.group(1),
             target=changelog_format.group(3),
+            epoch=debian_epoch,
             debian_revision=debian_revision,
             upstream_version=upstream_version
         )
@@ -123,17 +131,70 @@ def get_package_meta(debian_dir: str) -> package_type:
         )
 
 
-def create_dsc_file(debian_dir: str, outdir: str) -> None:
-    # TODO
-    # Create DSC (xsnow_3.3.2-1.dsc) file
-    #    -> read contents of debian/control, some data there can be
-    #       added 1:1, other data needs to be created in different
-    #       format. Create shasums
-    pass
+def create_dsc_file(
+    debian_dir: str, package: package_type, outdir: str
+) -> str:
+    dsc_file_name = os.path.join(
+        outdir, f'{package.name}_{package.debian_revision}.dsc'
+    )
+    dsc_data: Dict[str, Union[str, List]] = {
+        'Format': '3.0 (quilt)',
+        'Version': f'{package.epoch}:{package.debian_revision}',
+        'Testsuite': 'autopkgtest'
+    }
+    with open(f'{debian_dir}/control') as control:
+        # treat the control file input as a yaml syntax.
+        # This is not quite accurate but did not cause
+        # issues for the standard values of the control_keys
+        # list so far.
+        control_dict = yaml.safe_load(control)
+        control_keys = [
+            'Source',
+            'Architecture',
+            'Maintainer',
+            'Build-Depends',
+            'Standards-Version',
+            'Homepage',
+            'Vcs-Browser',
+            'Vcs-Git'
+        ]
+        for control_key in control_keys:
+            if control_key in control_dict:
+                dsc_data[control_key] = control_dict[control_key]
+
+    package_list = []
+    binary_list = []
+    with open(f'{debian_dir}/control') as control:
+        control_lines = control.read().split(os.linesep)
+        for control_line in control_lines:
+            if control_line.startswith('Package:'):
+                package_name = control_line.split(':')[1].strip()
+                binary_list.append(package_name)
+                package_list.append(
+                    '{0} {1} {2} {3} arch={4}'.format(
+                        package_name,
+                        'deb',
+                        control_dict.get('Section') or 'none',
+                        control_dict.get('Priority') or 'optional',
+                        control_dict.get('Architecture') or 'any'
+                    )
+                )
+    dsc_data['Binary'] = ','.join(binary_list)
+    dsc_data['Package-List'] = package_list
+
+    with open(dsc_file_name, 'w') as dsc:
+        for key in sorted(dsc_data.keys()):
+            if key == 'Package-List':
+                dsc.write('{0}:{1}'.format(key, os.linesep))
+                for package_name in dsc_data[key]:
+                    dsc.write(' {0}{1}'.format(package_name, os.linesep))
+            else:
+                dsc.write('{0}: {1}{2}'.format(key, dsc_data[key], os.linesep))
+    return dsc_file_name
 
 
 def create_source_tarballs(
-    package_dir: str, package: package_type, outdir: str
+    package_dir: str, package: package_type, dsc_file: str, outdir: str
 ) -> None:
     parent_dir = os.path.dirname(package_dir)
     symlink_name = f'{parent_dir}/{package.name}-{package.upstream_version}'
@@ -143,17 +204,20 @@ def create_source_tarballs(
     shutil.move(
         f'{package_dir}/debian', parent_dir
     )
+    debian_tar_file_name = \
+        f'{outdir}/{package.name}_{package.debian_revision}.debian.tar.xz'
     Command.run(
         [
-            'tar', '-C', parent_dir, '-h', '-cJf',
-            f'{outdir}/{package.name}_{package.debian_revision}.debian.tar.xz',
+            'tar', '-C', parent_dir, '-h', '-cJf', debian_tar_file_name,
             'debian'
         ]
     )
+    source_tar_file_name = \
+        f'{outdir}/{package.name}_{package.upstream_version}.orig.tar.gz'
     Command.run(
         [
-            'tar', '-C', parent_dir, '-h', '-czf',
-            f'{outdir}/{package.name}_{package.upstream_version}.orig.tar.gz',
+            'tar', '-C', parent_dir, '-h', '-czf', source_tar_file_name,
             f'{package.name}-{package.upstream_version}'
         ]
     )
+    # TODO: create Checksums-Sha1: Checksums-Sha256: Files:

@@ -28,3 +28,4 @@ sphinx_rtd_theme
 # Python static type checker
 mypy
 types-docopt
+types-PyYAML

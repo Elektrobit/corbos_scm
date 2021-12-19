@@ -4,3 +4,6 @@
 
 # Shell interface for docopt, the command-line interface description language
 docopt
+
+# YAML file parsing
+PyYAML
