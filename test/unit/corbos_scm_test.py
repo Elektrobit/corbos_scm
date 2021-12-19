@@ -18,9 +18,9 @@ class TestCorbosSCM:
         sys.argv = [
             sys.argv[0],
             '--git',
-            'https://github.com/OSInside/cloud-builder-packages.git',
+            'https://git.launchpad.net/ubuntu/+source/curl',
             '--package',
-            'projects/Corbos/xsnow',
+            '.',
             '--branch',
             'develop',
             '--outdir',
@@ -87,7 +87,7 @@ class TestCorbosSCM:
         mock_os_path_exists.return_value = True
         mock_os_path_isdir.return_value = True
         mock_yaml_safe_load.return_value = {
-            'Source': 'xsnow',
+            'Source': 'curl',
             'Architecture': 'any',
             'Maintainer': 'user@example.org',
             'Build-Depends': 'a, b, c',
@@ -98,43 +98,48 @@ class TestCorbosSCM:
             mock_open.return_value = MagicMock(spec=io.IOBase)
             file_handle = mock_open.return_value.__enter__.return_value
             file_handle.readline.return_value = \
-                'xsnow (1:3.3.2-1) unstable; urgency=low'
+                'curl (1:3.3.2-1) unstable; urgency=low'
             file_handle.read.return_value = \
                 'Package: foo\nPackage: bar'
             main()
         mock_os_symlink.assert_called_once_with(
-            'tmpdir/projects/Corbos/xsnow',
-            'tmpdir/projects/Corbos/xsnow-3.3.2'
+            'tmpdir/corbos',
+            'tmpdir/curl-3.3.2'
         )
         mock_shutil_move.assert_called_once_with(
-            'tmpdir/projects/Corbos/xsnow/debian',
-            'tmpdir/projects/Corbos'
+            'tmpdir/corbos/debian',
+            'tmpdir'
         )
         assert mock_Command.run.call_args_list == [
             call(
                 [
                     'git', 'clone',
-                    'https://github.com/OSInside/cloud-builder-packages.git',
-                    'tmpdir'
+                    'https://git.launchpad.net/ubuntu/+source/curl',
+                    'tmpdir/corbos'
                 ]
             ),
             call(
                 [
-                    'git', '-C', 'tmpdir', 'checkout', 'develop'
+                    'rm', '-rf', 'tmpdir/corbos/.git'
                 ]
             ),
             call(
                 [
-                    'tar', '-C', 'tmpdir/projects/Corbos',
-                    '-h', '-cJf', 'obs_out/xsnow_3.3.2-1.debian.tar.xz',
+                    'git', '-C', 'tmpdir/corbos', 'checkout', 'develop'
+                ]
+            ),
+            call(
+                [
+                    'tar', '-C', 'tmpdir',
+                    '-h', '-cJf', 'obs_out/curl_3.3.2-1.debian.tar.xz',
                     'debian'
                 ]
             ),
             call(
                 [
-                    'tar', '-C', 'tmpdir/projects/Corbos',
-                    '-h', '-czf', 'obs_out/xsnow_3.3.2.orig.tar.gz',
-                    'xsnow-3.3.2'
+                    'tar', '-C', 'tmpdir',
+                    '-h', '-czf', 'obs_out/curl_3.3.2.orig.tar.gz',
+                    'curl-3.3.2'
                 ]
             )
         ]
@@ -147,7 +152,7 @@ class TestCorbosSCM:
             call('Package-List:\n'),
             call(' foo deb section priority arch=any\n'),
             call(' bar deb section priority arch=any\n'),
-            call('Source: xsnow\n'),
+            call('Source: curl\n'),
             call('Testsuite: autopkgtest\n'),
             call('Version: 1:3.3.2-1\n')
         ]

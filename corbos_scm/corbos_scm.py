@@ -32,7 +32,7 @@ Options:
         Path to package relative to --git root
 
     --branch=<name>
-        Branch in git source [default: master].
+        Branch in git source.
 
     --outdir=<obs_out>
         Output directory to store data produced by the service.
@@ -77,12 +77,26 @@ def main() -> None:
         Path(args['--outdir']).mkdir(parents=True, exist_ok=True)
 
     temp_git_dir = TemporaryDirectory(prefix='corbos_scm.')
+
+    clone_target = temp_git_dir.name
+    checkout_subdir_name = 'corbos'
+    if args['--package'] == '.':
+        # if no dedicated directory exists for the package
+        # we need to name one for the clone target. This is
+        # needed to allow the tar process to work
+        clone_target = os.path.join(clone_target, checkout_subdir_name)
+        args['--package'] = checkout_subdir_name
+
     Command.run(
-        ['git', 'clone', args['--git'], temp_git_dir.name]
+        ['git', 'clone', args['--git'], clone_target]
     )
+    Command.run(
+        ['rm', '-rf', f'{clone_target}/.git']
+    )
+
     if args['--branch']:
         Command.run(
-            ['git', '-C', temp_git_dir.name, 'checkout', args['--branch']]
+            ['git', '-C', clone_target, 'checkout', args['--branch']]
         )
 
     package_dir = os.path.join(temp_git_dir.name, args['--package'])
