@@ -19,8 +19,6 @@ class TestCorbosSCM:
             sys.argv[0],
             '--git',
             'https://git.launchpad.net/ubuntu/+source/curl',
-            '--package',
-            '.',
             '--branch',
             'develop',
             '--outdir',

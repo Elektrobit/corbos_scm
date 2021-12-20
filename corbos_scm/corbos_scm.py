@@ -17,7 +17,8 @@
 #
 """
 Usage:
-    corbos_scm --git=<git_clone_source> --package=<package_path> --outdir=<obs_out>
+    corbos_scm --git=<git_clone_source> --outdir=<obs_out>
+        [--package=<package_path>]
         [--branch=<name>]
     corbos_scm -h | --help
     corbos_scm --version
@@ -29,7 +30,7 @@ Options:
         matching the EB Corbos Linux project.
 
     --package=<package_path>
-        Path to package relative to --git root
+        Path to package relative to --git root [default: .]
 
     --branch=<name>
         Branch in git source.
