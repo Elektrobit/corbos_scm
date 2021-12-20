@@ -1,0 +1,111 @@
+#
+# spec file for package python-corbos_scm
+#
+# Copyright (c) 2020 SUSE Software Solutions Germany GmbH, Nuernberg, Germany.
+#
+# All modifications and additions to the file contributed by third parties
+# remain the property of their copyright owners, unless otherwise agreed
+# upon. The license for this file, and modifications and additions to the
+# file, is the same license as for the pristine package itself (unless the
+# license for the pristine package is not an Open Source License, in which
+# case the license is the MIT License). An "Open Source License" is a
+# license that conforms to the Open Source Definition (Version 1.9)
+# published by the Open Source Initiative.
+#
+# Please submit bugfixes or comments via:
+#
+#       https://github.com/schaefi/corbos_scm
+#
+
+# If they aren't provided by a system installed macro, define them
+%{!?_defaultdocdir: %global _defaultdocdir %{_datadir}/doc}
+%{!?__python3: %global __python3 /usr/bin/python3}
+
+%if %{undefined python3_sitelib}
+%global python3_sitelib %(%{__python3} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+%endif
+
+%if 0%{?el7}
+%global python3_pkgversion 36
+%else
+%{!?python3_pkgversion:%global python3_pkgversion 3}
+%endif
+
+%if 0%{?debian} || 0%{?ubuntu}
+%global is_deb 1
+%global pygroup python
+%global sysgroup admin
+%global develsuffix dev
+%else
+%global pygroup Development/Languages/Python
+%global sysgroup System/Management
+%global develsuffix devel
+%endif
+
+Name:           python-corbos_scm
+Version:        %%VERSION
+Release:        0
+Url:            https://github.com/schaefi/corbos_scm
+Summary:        Corbos SCM - OBS source service
+License:        GPL-3.0-or-later
+%if "%{_vendor}" == "debbuild"
+# Needed to set Maintainer in output debs
+Packager:       Marcus Schaefer <marcus.schaefer@gmail.com>
+%endif
+Group:          %{pygroup}
+Source:         %{name}.tar.gz
+Source1:        %{name}-rpmlintrc
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildRequires:  python%{python3_pkgversion}-%{develsuffix}
+BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  fdupes
+BuildArch:      noarch
+
+%description
+An Open Build Service (OBS) service to manage packages
+sources as they are used by the ElektroBit (EB) Corbos
+Linux system.
+
+# python3-corbos_scm
+%package -n python%{python3_pkgversion}-corbos_scm
+Summary:        Corbos SCM - OBS source service
+Group:          Development/Languages/Python
+Requires:       python%{python3_pkgversion}-docopt
+%if 0%{?ubuntu} || 0%{?debian}
+Requires:       python%{python3_pkgversion}-yaml
+%else
+Requires:       python%{python3_pkgversion}-PyYAML
+%endif
+Requires:       python%{python3_pkgversion}-setuptools
+
+%description -n python%{python3_pkgversion}-corbos_scm
+An Open Build Service (OBS) service to manage packages
+sources as they are used by the ElektroBit (EB) Corbos
+Linux system.
+
+%prep
+%setup -q -n corbos_scm-%{version}
+
+%build
+# Build Python 3 version
+python3 setup.py build
+
+%install
+# Install Python 3 version
+python3 setup.py install --prefix=%{_prefix} --root=%{buildroot} %{?is_deb:--install-layout=deb}
+
+# Install man pages
+make buildroot=%{buildroot}/ docdir=%{_defaultdocdir}/ install
+
+# Install LICENSE and README
+make buildroot=%{buildroot}/ docdir=%{_defaultdocdir}/ install_package_docs
+
+%files -n python%{python3_pkgversion}-corbos_scm
+%dir %{_defaultdocdir}/python-corbos_scm
+%dir %{_usr}/lib/obs
+%{_usr}/lib/obs/service
+%{python3_sitelib}/corbos_scm*
+%{_defaultdocdir}/python-corbos_scm/LICENSE
+%{_defaultdocdir}/python-corbos_scm/README
+
+%changelog
