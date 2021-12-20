@@ -1,6 +1,7 @@
 graft corbos_scm
 graft package
 
+include Makefile
 include README.rst
 include LICENSE
 include tox.ini
