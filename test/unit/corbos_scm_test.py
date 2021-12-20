@@ -74,11 +74,22 @@ class TestCorbosSCM:
     @patch('pathlib.Path.mkdir')
     @patch('corbos_scm.corbos_scm.TemporaryDirectory')
     @patch('corbos_scm.corbos_scm.Command')
+    @patch('os.path.getsize')
     def test_source_data_creation(
-        self, mock_Command, mock_TemporaryDirectory, mock_pathlib_mkdir,
+        self, mock_os_path_getsize, mock_Command,
+        mock_TemporaryDirectory, mock_pathlib_mkdir,
         mock_os_path_exists, mock_os_path_isdir, mock_shutil_move,
         mock_os_symlink, mock_yaml_safe_load, mock_sys_exit
     ):
+        read_return_tar_chunks = [b'', b'', b'', b'', b'', b'', b'data']
+
+        def read_return(*args, **kwargs):
+            if args:
+                return read_return_tar_chunks.pop()
+            else:
+                return 'Package: foo\nPackage: bar'
+
+        mock_os_path_getsize.return_value = 0
         tempdir = Mock()
         tempdir.name = 'tmpdir'
         mock_TemporaryDirectory.return_value = tempdir
@@ -97,8 +108,7 @@ class TestCorbosSCM:
             file_handle = mock_open.return_value.__enter__.return_value
             file_handle.readline.return_value = \
                 'curl (1:3.3.2-1) unstable; urgency=low'
-            file_handle.read.return_value = \
-                'Package: foo\nPackage: bar'
+            file_handle.read.side_effect = read_return
             main()
         mock_os_symlink.assert_called_once_with(
             'tmpdir/corbos',
@@ -152,5 +162,32 @@ class TestCorbosSCM:
             call(' bar deb section priority arch=any\n'),
             call('Source: curl\n'),
             call('Testsuite: autopkgtest\n'),
-            call('Version: 1:3.3.2-1\n')
+            call('Version: 1:3.3.2-1\n'),
+            call('Checksums-Sha1:\n'),
+            call(
+                ' da39a3ee5e6b4b0d3255bfef95601890afd80709 0 '
+                'curl_3.3.2.orig.tar.gz\n'
+            ),
+            call(
+                ' da39a3ee5e6b4b0d3255bfef95601890afd80709 0 '
+                'curl_3.3.2-1.debian.tar.xz\n'
+            ),
+            call('Checksums-Sha256:\n'),
+            call(
+                ' 3a6eb0790f39ac87c94f3856b2dd2c5d110e68116022'
+                '61a9a923d3bb23adc8b7 0 curl_3.3.2.orig.tar.gz\n'
+            ),
+            call(
+                ' e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b'
+                '934ca495991b7852b855 0 curl_3.3.2-1.debian.tar.xz\n'
+            ),
+            call('Files:\n'),
+            call(
+                ' d41d8cd98f00b204e9800998ecf8427e 0 '
+                'curl_3.3.2.orig.tar.gz\n'
+            ),
+            call(
+                ' d41d8cd98f00b204e9800998ecf8427e 0 '
+                'curl_3.3.2-1.debian.tar.xz\n'
+            )
         ]

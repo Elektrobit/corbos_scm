@@ -46,10 +46,11 @@ import shutil
 import re
 from pathlib import Path
 from typing import (
-    NamedTuple, Dict, Union, List
+    NamedTuple, Dict, Union, List, Any
 )
 from tempfile import TemporaryDirectory
 import docopt
+import hashlib
 
 from corbos_scm.version import __version__
 from corbos_scm.command import Command
@@ -66,6 +67,15 @@ package_type = NamedTuple(
         ('upstream_version', str),
         ('debian_revision', str),
         ('target', str)
+    ]
+)
+
+source_sum_type = NamedTuple(
+    'source_sum_type', [
+        ('md5', str),
+        ('sha1', str),
+        ('sha256', str),
+        ('bytesize', int)
     ]
 )
 
@@ -235,4 +245,68 @@ def create_source_tarballs(
             f'{package.name}-{package.upstream_version}'
         ]
     )
-    # TODO: create Checksums-Sha1: Checksums-Sha256: Files:
+    source_files: Dict[str, source_sum_type] = {}
+    for source_file in [source_tar_file_name, debian_tar_file_name]:
+        sha256_checksum = _calculate_hash_hexdigest(
+            hashlib.sha256(), source_file
+        )
+        sha1_checksum = _calculate_hash_hexdigest(
+            hashlib.sha1(), source_file
+        )
+        md5_checksum = _calculate_hash_hexdigest(
+            hashlib.md5(), source_file
+        )
+        source_files[os.path.basename(source_file)] = source_sum_type(
+            md5=md5_checksum,
+            sha1=sha1_checksum,
+            sha256=sha256_checksum,
+            bytesize=os.path.getsize(source_file)
+        )
+    with open(dsc_file, 'a') as dsc:
+        dsc.write(f'Checksums-Sha1:{os.linesep}')
+        for source_file in source_files:
+            dsc.write(
+                ' {0} {1} {2}{3}'.format(
+                    source_files[source_file].sha1,
+                    source_files[source_file].bytesize,
+                    source_file,
+                    os.linesep
+                )
+            )
+        dsc.write(f'Checksums-Sha256:{os.linesep}')
+        for source_file in source_files:
+            dsc.write(
+                ' {0} {1} {2}{3}'.format(
+                    source_files[source_file].sha256,
+                    source_files[source_file].bytesize,
+                    source_file,
+                    os.linesep
+                )
+            )
+        dsc.write(f'Files:{os.linesep}')
+        for source_file in source_files:
+            dsc.write(
+                ' {0} {1} {2}{3}'.format(
+                    source_files[source_file].md5,
+                    source_files[source_file].bytesize,
+                    source_file,
+                    os.linesep
+                )
+            )
+
+
+def _calculate_hash_hexdigest(
+    digest: Any, filename: str, digest_blocks: int = 128
+) -> str:
+    """
+    Calculates the hash hexadecimal digest for a given file.
+
+    :param func digest: Digest function for hash calculation
+    :param str filename: File to compute
+    :param int digest_blocks: Number of blocks processed at a time
+    """
+    chunk_size = digest_blocks * digest.block_size
+    with open(filename, 'rb') as source:
+        for chunk in iter(lambda: source.read(chunk_size), b''):
+            digest.update(chunk)
+    return digest.hexdigest()

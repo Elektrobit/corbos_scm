@@ -6,10 +6,9 @@
     <required/>
   </parameter>
   <parameter name="package">
-    <description>Path to package relative to git root</description>
-    <required/>
+    <description>Path to package relative to git root [default: .]</description>
   </parameter>
   <parameter name="branch">
-    <description>Branch in git source [default: master]</description>
+    <description>Branch in git source</description>
   </parameter>
 </service>
