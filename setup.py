@@ -23,7 +23,7 @@ config = {
     'url': 'https://github.com/schaefi/corbos_scm',
     'author_email': 'marcus.schaefer@gmail.com',
     'version': __version__,
-    'license' : 'GPLv3+',
+    'license' : 'MIT',
     'install_requires': [
         'docopt'
     ],
@@ -39,8 +39,7 @@ config = {
        # classifier: http://pypi.python.org/pypi?%3Aaction=list_classifiers
        'Development Status :: 2 - Pre-Alpha',
        'Intended Audience :: Developers',
-       'License :: OSI Approved :: '
-       'GNU General Public License v3 or later (GPLv3+)',
+       'License :: OSI Approved :: MIT License',
        'Operating System :: POSIX :: Linux',
        'Programming Language :: Python :: 3.6',
        'Programming Language :: Python :: 3.8',

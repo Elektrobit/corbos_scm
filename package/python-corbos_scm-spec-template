@@ -47,7 +47,7 @@ Version:        %%VERSION
 Release:        0
 Url:            https://github.com/schaefi/corbos_scm
 Summary:        Corbos SCM - OBS source service
-License:        GPL-3.0-or-later
+License:        MIT
 %if "%{_vendor}" == "debbuild"
 # Needed to set Maintainer in output debs
 Packager:       Marcus Schaefer <marcus.schaefer@gmail.com>
