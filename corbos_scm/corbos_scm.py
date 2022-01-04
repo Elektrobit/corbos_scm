@@ -170,12 +170,23 @@ def create_dsc_file(
         'Version': f'{package.epoch}:{package.debian_revision}',
         'Testsuite': 'autopkgtest'
     }
+    control_raw = ''
     with open(f'{debian_dir}/control') as control:
         # treat the control file input as a yaml syntax.
-        # This is not quite accurate but did not cause
-        # issues for the standard values of the control_keys
-        # list so far.
-        control_dict = yaml.safe_load(control)
+        # This is not accurate but was able with less
+        # effort and served the purpose for reading the
+        # information needed in the context of this service.
+        for line in control.readlines():
+            if not line.startswith('#'):
+                if line.startswith(' ') or line.startswith('\t'):
+                    # replace inline yaml control characters with
+                    # an allowed one. This is nasty but helps reading
+                    # the control file as yaml data. The information
+                    # replaced is not used in the output data
+                    line = line.replace(':', ';')
+                control_raw += line
+
+        control_dict = yaml.safe_load(control_raw)
         control_keys = [
             'Source',
             'Architecture',

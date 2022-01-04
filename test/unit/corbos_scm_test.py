@@ -109,6 +109,12 @@ class TestCorbosSCM:
             file_handle.readline.return_value = \
                 'curl (1:3.3.2-1) unstable; urgency=low'
             file_handle.read.side_effect = read_return
+            file_handle.readlines.return_value = [
+                '# comment\n',
+                '  inline: ctrl-char\n',
+                'Package: foo\n',
+                'Package: bar'
+            ]
             main()
         mock_os_symlink.assert_called_once_with(
             'tmpdir/corbos',
