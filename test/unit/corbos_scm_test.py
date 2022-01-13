@@ -67,7 +67,6 @@ class TestCorbosSCM:
 
     @patch('sys.exit')
     @patch('yaml.safe_load')
-    @patch('os.symlink')
     @patch('shutil.move')
     @patch('os.path.isdir')
     @patch('os.path.exists')
@@ -79,7 +78,7 @@ class TestCorbosSCM:
         self, mock_os_path_getsize, mock_Command,
         mock_TemporaryDirectory, mock_pathlib_mkdir,
         mock_os_path_exists, mock_os_path_isdir, mock_shutil_move,
-        mock_os_symlink, mock_yaml_safe_load, mock_sys_exit
+        mock_yaml_safe_load, mock_sys_exit
     ):
         read_return_tar_chunks = [b'', b'', b'', b'', b'', b'', b'data']
 
@@ -116,14 +115,10 @@ class TestCorbosSCM:
                 'Package: bar'
             ]
             main()
-        mock_os_symlink.assert_called_once_with(
-            'tmpdir/corbos',
-            'tmpdir/curl-3.3.2'
-        )
-        mock_shutil_move.assert_called_once_with(
-            'tmpdir/corbos/debian',
-            'tmpdir'
-        )
+        assert mock_shutil_move.call_args_list == [
+            call('tmpdir/corbos/debian', 'tmpdir'),
+            call('tmpdir/corbos', 'tmpdir/curl-3.3.2')
+        ]
         assert mock_Command.run.call_args_list == [
             call(
                 [
@@ -145,14 +140,14 @@ class TestCorbosSCM:
             call(
                 [
                     'tar', '-C', 'tmpdir',
-                    '-h', '-cJf', 'obs_out/curl_3.3.2-1.debian.tar.xz',
+                    '-cJf', 'obs_out/curl_3.3.2-1.debian.tar.xz',
                     'debian'
                 ]
             ),
             call(
                 [
                     'tar', '-C', 'tmpdir',
-                    '-h', '-czf', 'obs_out/curl_3.3.2.orig.tar.gz',
+                    '-czf', 'obs_out/curl_3.3.2.orig.tar.gz',
                     'curl-3.3.2'
                 ]
             )

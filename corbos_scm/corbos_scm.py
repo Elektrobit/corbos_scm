@@ -237,10 +237,6 @@ def create_source_tarballs(
     package_dir: str, package: package_type, dsc_file: str, outdir: str
 ) -> None:
     parent_dir = os.path.dirname(package_dir)
-    symlink_name = f'{parent_dir}/{package.name}-{package.upstream_version}'
-    os.symlink(
-        package_dir, symlink_name
-    )
     shutil.move(
         f'{package_dir}/debian', parent_dir
     )
@@ -248,15 +244,19 @@ def create_source_tarballs(
         f'{outdir}/{package.name}_{package.debian_revision}.debian.tar.xz'
     Command.run(
         [
-            'tar', '-C', parent_dir, '-h', '-cJf', debian_tar_file_name,
+            'tar', '-C', parent_dir, '-cJf', debian_tar_file_name,
             'debian'
         ]
+    )
+    upstream_name = f'{parent_dir}/{package.name}-{package.upstream_version}'
+    shutil.move(
+        package_dir, upstream_name
     )
     source_tar_file_name = \
         f'{outdir}/{package.name}_{package.upstream_version}.orig.tar.gz'
     Command.run(
         [
-            'tar', '-C', parent_dir, '-h', '-czf', source_tar_file_name,
+            'tar', '-C', parent_dir, '-czf', source_tar_file_name,
             f'{package.name}-{package.upstream_version}'
         ]
     )
