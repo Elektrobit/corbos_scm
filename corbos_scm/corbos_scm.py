@@ -192,6 +192,7 @@ def create_dsc_file(
             'Architecture',
             'Maintainer',
             'Build-Depends',
+            'Build-Depends-Indep',
             'Standards-Version',
             'Homepage',
             'Vcs-Browser',
