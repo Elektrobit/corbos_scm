@@ -200,7 +200,8 @@ def create_dsc_file(
         ]
         for control_key in control_keys:
             if control_key in control_dict:
-                dsc_data[control_key] = control_dict[control_key]
+                dsc_data[control_key] = \
+                    control_dict[control_key].replace(';', ':')
 
     package_list = []
     binary_list = []

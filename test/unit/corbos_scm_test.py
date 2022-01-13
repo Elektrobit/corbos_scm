@@ -98,7 +98,7 @@ class TestCorbosSCM:
             'Source': 'curl',
             'Architecture': 'any',
             'Maintainer': 'user@example.org',
-            'Build-Depends': 'a, b, c',
+            'Build-Depends': 'a;native, b, c',
             'Section': 'section',
             'Priority': 'priority'
         }
@@ -155,7 +155,7 @@ class TestCorbosSCM:
         assert file_handle.write.call_args_list == [
             call('Architecture: any\n'),
             call('Binary: foo,bar\n'),
-            call('Build-Depends: a, b, c\n'),
+            call('Build-Depends: a:native, b, c\n'),
             call('Format: 3.0 (quilt)\n'),
             call('Maintainer: user@example.org\n'),
             call('Package-List:\n'),
