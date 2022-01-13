@@ -21,5 +21,5 @@
 """
 Global version information used in corbos_scm and the package
 """
-__version__ = '1.0.6'
+__version__ = '1.0.7'
 __githash__ = '$Format:%H$'
