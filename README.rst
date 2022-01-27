@@ -1,22 +1,12 @@
 Corbos SCM - OBS service
 ========================
 
-An Open Build Service (OBS) service to manage packages
-sources as they are used by the ElektroBit (EB) Corbos
-Linux system.
+An Open Build Service (OBS) service to manage Debian
+packages sources from a git repo. The service can be used for Debian
+based package sources and utilizes the ubuntu-dev-tools
 
-The service can generally be used for Debian based package
-sources if the following conditions applies:
-
-1. The sources are organized in a git repo
-2. The referenced source path contains a directory named: `debian`
-3. The rest of the referenced sources with the `debian`
-   directory excluded is expected to provide the upstream sources.
-
-Package source provider that matches the above criteria can be
-found in e.g Ubuntu's launchpad or on Debian's salsa. As an example,
-the following steps are needed to build the `curl` package from the
-Ubuntu launchpad in an OBS instance.
+As an example, the following steps are needed to build
+the `curl` package from the Ubuntu launchpad in an OBS instance.
 
 1. Install `corbos_scm` service
 
@@ -88,13 +78,9 @@ Ubuntu launchpad in an OBS instance.
 Behind the Scenes
 -----------------
 
-The `corbos_scm` service is very simple. It looks up all relevant
-information from data inside of the `debian` directory and
-creates the `.dsc` file. Next it creates the debian tarball
-from the `debian` directory and the source tarball from
-everyting but the `debian` directory. The result files are
-committed as data to the OBS backend and allows OBS to build
-debian packages using the native debian toolchain.
+The `corbos_scm` service is very simple. It uses the tooling
+provided by the ubuntu-dev-tools to create the source files
+such that OBS can build the package.
 
 On the local system the service can be tested with:
 
