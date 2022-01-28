@@ -1,14 +1,22 @@
 <service name="corbos_scm">
   <summary>Compose Corbos Source into OBS package sources</summary>
-  <description>The service takes packages sources from the Corbos Linux project and commits them to build in a OBS project</description>
-  <parameter name="git">
-    <description>Git clone location to fetch packages sources</description>
-    <required/>
+  <description>The service takes packages sources from the given distro and puts them into the OBS project</description>
+  <parameter name="mirror">
+    <description>Preferred Mirror location</description>
+  </parameter>
+  <parameter name="distribution">
+    <description>Pull from: debian, ubuntu</description>
   </parameter>
   <parameter name="package">
-    <description>Path to package relative to git root [default: .]</description>
+    <description>Package name</description>
+    <required/>
   </parameter>
-  <parameter name="branch">
-    <description>Branch in git source</description>
+  <parameter name="registry">
+    <description>Container registry URI</description>
+    <required/>
+  </parameter>
+  <parameter name="container">
+    <description>Container name in registry which provides the ubuntu-dev-tools</description>
+    <required/>
   </parameter>
 </service>

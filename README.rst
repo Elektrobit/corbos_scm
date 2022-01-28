@@ -1,12 +1,15 @@
 Corbos SCM - OBS service
 ========================
 
-An Open Build Service (OBS) service to manage Debian
-packages sources from a git repo. The service can be used for Debian
-based package sources and utilizes the ubuntu-dev-tools
+An Open Build Service (OBS) service to fetch Debian
+packages sources. The service can be used for Debian/Ubuntu
+based packages and utilizes the ubuntu-dev-tools from
+a container. Calling from a container allows to use the Ubuntu
+devtools toolchain independently from the host system as long
+as the host supports the podman container engine
 
 As an example, the following steps are needed to build
-the `curl` package from the Ubuntu launchpad in an OBS instance.
+the `curl` package from Debian for Ubuntu(20.10) in OBS.
 
 1. Install `corbos_scm` service
 
@@ -20,7 +23,7 @@ the `curl` package from the Ubuntu launchpad in an OBS instance.
      **The example below can only work if the corbos_scm service
      was installed on the backend server of your build service.**
 
-2. Create a package in your OBS instance
+2. Create a package in OBS
 
    .. code:: bash
 
@@ -40,7 +43,9 @@ the `curl` package from the Ubuntu launchpad in an OBS instance.
 
       <services>
         <service name="corbos_scm">
-          <param name="git">https://git.launchpad.net/ubuntu/+source/curl</param>
+          <param name="registry">registry.example.com</param>
+          <param name="container">ubdevtools:latest</param>
+          <param name="package">curl</param>
         </service>
       </services>
 
@@ -65,7 +70,7 @@ the `curl` package from the Ubuntu launchpad in an OBS instance.
    Note:
      **Be aware that the following repo definiton just serves
      as an example and will most likely not be available in
-     the exact same way on your custom OBS server.**
+     the exact same way on a custom OBS server.**
 
    .. code:: xml
 
@@ -74,6 +79,42 @@ the `curl` package from the Ubuntu launchpad in an OBS instance.
         <arch>x86_64</arch>
       </repository>
 
+Container Setup
+---------------
+
+If there is no container with ubuntu-dev-tools available, the
+following KIWI description can be used to build one
+
+.. code:: xml
+
+   <image schemaversion="7.4" name="ubuntu-dev-tools">
+     <description type="system">
+       <author>Marcus Schäfer</author>
+       <contact>marcus.schaefer@gmail.com</contact>
+       <specification>Runtime container ubuntu dev tools</specification>
+     </description>
+     <preferences>
+       <version>1.0.1</version>
+       <packagemanager>apt</packagemanager>
+       <type image="docker">
+         <containerconfig name="ubdevtools"/>
+       </type>
+     </preferences>
+     <repository type="apt-deb" alias="kiwi-next-generation" priority="1" repository_gpgcheck="false">
+       <source path="obs://Virtualization:Appliances:Builder/xUbuntu_21.04"/>
+     </repository>
+     <repository type="apt-deb" alias="Ubuntu-Hirsute-Universe" distribution="hirsute" components="main multiverse restricted universe" repository_gpgcheck="false">
+       <source path="obs://Ubuntu:21.04/universe"/>
+     </repository>
+     <repository type="apt-deb" alias="Ubuntu-Hirsute" distribution="hirsute" components="main multiverse restricted universe" repository_gpgcheck="false">
+       <source path="obs://Ubuntu:21.04/standard"/>
+     </repository>
+     <packages type="image">
+       <package name="ubuntu-dev-tools"/>
+       <package name="mawk"/>
+     </packages>
+     <packages type="bootstrap"/>
+   </image>
 
 Behind the Scenes
 -----------------
@@ -99,17 +140,14 @@ optional parameters exists:
 
 .. code:: xml
 
-   <param name="package">path/to/package</param>
+   <param name="mirror">Preferred Mirror location</param>
 
-This setting allows to specify a path to the package sources in
-the git. By default this path is set to `.` which is the directory
-of the git checkout. However if the git is organized differently
-a path spec to point to the source might be needed.
+This setting allows to specify a specific mirror to look for
+the desired content.
 
 .. code:: xml
 
-   <param name="branch">branch_name</param>
+   <param name="distribution">Pull from: debian, ubuntu</param>
 
-This setting specifies the git branch to use. By default no branch
-specification is used, which leads to the branch that is configured
-to be the default on the remote side of the git server.
+This setting allows to specify the distribution name to target
+the desired package content.

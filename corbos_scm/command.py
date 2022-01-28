@@ -72,7 +72,7 @@ class Command:
         output, error = process.communicate()
         if process.returncode != 0 and raise_on_error:
             raise CSCMCommandError(
-                f'stderr: {error!r}, stdout: {output!r}'
+                f'command: {command}, stderr: {error!r}, stdout: {output!r}'
             )
         return command_type(
             output=format(output),
