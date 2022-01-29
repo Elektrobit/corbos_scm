@@ -56,7 +56,7 @@ class TestCorbosSCM:
                 [
                     'podman', 'run', '-v', 'obs_out:/tmp',
                     '-ti', '--rm', 'ubdevtools:latest',
-                    'bash -c "cd /tmp && pull-debian-source '
+                    'bash -c "cd /tmp && pull-debian-source --download-only '
                     '--mirror some-mirror --distro ubuntu curl"'
                 ]
             )

@@ -74,7 +74,7 @@ def main() -> None:
     )
 
     pull_debian_source = [
-        'cd', '/tmp', '&&', 'pull-debian-source'
+        'cd', '/tmp', '&&', 'pull-debian-source', '--download-only'
     ]
     if args['--mirror']:
         pull_debian_source.extend(
