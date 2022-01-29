@@ -89,15 +89,3 @@ class CSCMCommandError(CSCMError):
     Exception raised if popen call failed and or command
     execution was not successful
     """
-
-
-class CSCMDebianSourceNotFound(CSCMError):
-    """
-    Exception raised if debian source directory was not found
-    """
-
-
-class CSCMDebianChangelogFormatNotDetected(CSCMError):
-    """
-    Exception raised if debian changelog format could not be parsed
-    """
