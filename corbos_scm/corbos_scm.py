@@ -50,6 +50,7 @@ Options:
 """
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 import docopt
 
 from corbos_scm.version import __version__
@@ -88,10 +89,28 @@ def main() -> None:
         args['--package']
     )
 
+    # Create a safe symlink with regards to the volume
+    # name limitations of podman. For sharing a directory
+    # some characters are not allowed, e.g ":". In OBS
+    # the colon is used as project separator. Because of
+    # that it happens very easily that the --outdir path
+    # created by OBS at call time of the service contains
+    # colons and prevents this directory name from being
+    # eligible to be shared via --volume with podman.
+    # The recommended workaround from the podman team is
+    # to create a temporary symlink which is what is
+    # done next
+    save_volume_dir = TemporaryDirectory()
+    save_volume_file = os.sep.join(
+        [save_volume_dir.name, 'volume']
+    )
+
+    os.symlink(args["--outdir"], save_volume_file)
+
     Command.run(
         [
-            'podman', 'run', '-v', f'{args["--outdir"]}:/tmp',
-            '-ti', '--rm', args["--container"],
-            f'bash -c \"{" ".join(pull_debian_source)}\"'
+            'podman', 'run', '--volume', f'{save_volume_file}:/tmp',
+            '-ti', '--rm', args["--container"], 'bash', '-c',
+            ' '.join(pull_debian_source)
         ]
     )

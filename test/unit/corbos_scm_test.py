@@ -1,5 +1,5 @@
 from mock import (
-    patch, call
+    patch, call, Mock
 )
 from pytest import fixture
 import sys
@@ -30,20 +30,28 @@ class TestCorbosSCM:
         ]
 
     @patch('sys.exit')
+    @patch('os.symlink')
     @patch('os.path.exists')
     @patch('corbos_scm.corbos_scm.Path')
     @patch('corbos_scm.corbos_scm.Command')
+    @patch('corbos_scm.corbos_scm.TemporaryDirectory')
     def test_pull_and_run(
-        self, mock_Command, mock_Path,
-        mock_os_path_exists, mock_sys_exit
+        self, mock_TemporaryDirectory, mock_Command, mock_Path,
+        mock_os_path_exists, mock_os_symlink, mock_sys_exit
     ):
+        tmpdir = Mock()
+        tmpdir.name = 'tmpdir'
         mock_os_path_exists.return_value = False
+        mock_TemporaryDirectory.return_value = tmpdir
 
         main()
 
         mock_Path.assert_called_once_with('obs_out')
         mock_Path.return_value.mkdir.assert_called_once_with(
             parents=True, exist_ok=True
+        )
+        mock_os_symlink.assert_called_once_with(
+            'obs_out', 'tmpdir/volume'
         )
         assert mock_Command.run.call_args_list == [
             call(
@@ -54,10 +62,11 @@ class TestCorbosSCM:
             ),
             call(
                 [
-                    'podman', 'run', '-v', 'obs_out:/tmp',
+                    'podman', 'run', '--volume', 'tmpdir/volume:/tmp',
                     '-ti', '--rm', 'ubdevtools:latest',
-                    'bash -c "cd /tmp && pull-debian-source --download-only '
-                    '--mirror some-mirror --distro ubuntu curl"'
+                    'bash', '-c',
+                    'cd /tmp && pull-debian-source --download-only '
+                    '--mirror some-mirror --distro ubuntu curl'
                 ]
             )
         ]
