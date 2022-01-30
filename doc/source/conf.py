@@ -48,7 +48,7 @@ author = 'marcus.schaefer@gmail.com'
 # built documents.
 #
 # The short X.Y version.
-version = '2.0.1'
+version = '2.0.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 
