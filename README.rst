@@ -74,8 +74,8 @@ the `curl` package from Debian for Ubuntu(20.10) in OBS.
 
    .. code:: xml
 
-      <repository name="xUbuntu_20.10">
-        <path project="Ubuntu:20.10" repository="universe"/>
+      <repository name="xUbuntu_21.04">
+        <path project="Ubuntu:21.04" repository="universe"/>
         <arch>x86_64</arch>
       </repository>
 
@@ -134,20 +134,3 @@ be effective on the remote backend of OBS, it's required to install
 it there. This is because obs creates a command call from the
 information provided in the `_service` file and issues that command
 on its remote backend.
-
-Along with the most simple `_service` file the following
-optional parameters exists:
-
-.. code:: xml
-
-   <param name="mirror">Preferred Mirror location</param>
-
-This setting allows to specify a specific mirror to look for
-the desired content.
-
-.. code:: xml
-
-   <param name="distribution">Pull from: debian, ubuntu</param>
-
-This setting allows to specify the distribution name to target
-the desired package content.

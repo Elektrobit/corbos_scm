@@ -21,20 +21,12 @@
 """
 Usage:
     corbos_scm --package=<name> --registry=<uri> --container=<name> --outdir=<obs_out>
-        [--mirror=<mirror>]
-        [--distribution=<name>]
     corbos_scm -h | --help
     corbos_scm --version
 
 Options:
     --package=<name>
         Name of package to fetch
-
-    --mirror=<mirror>
-        Preferred mirror(s)
-
-    --distribution=<name>
-        Pull from: debian, ubuntu
 
     --registry=<uri>
         Container registry URI
@@ -75,19 +67,11 @@ def main() -> None:
     )
 
     pull_debian_source = [
-        'cd', '/tmp', '&&', 'pull-debian-source', '--download-only'
+        'cd', '/mnt', '&&', 'apt', 'update', '&&',
+        'apt', 'source', args['--package'], '&&',
+        'find', '-maxdepth', '1', '-type', 'd', '-not', '-path', '.', '|',
+        'xargs', 'rm', '-rf'
     ]
-    if args['--mirror']:
-        pull_debian_source.extend(
-            ['--mirror', args['--mirror']]
-        )
-    if args['--distribution']:
-        pull_debian_source.extend(
-            ['--distro', args['--distribution']]
-        )
-    pull_debian_source.append(
-        args['--package']
-    )
 
     # Create a safe symlink with regards to the volume
     # name limitations of podman. For sharing a directory
@@ -109,7 +93,7 @@ def main() -> None:
 
     Command.run(
         [
-            'podman', 'run', '--volume', f'{save_volume_file}:/tmp',
+            'podman', 'run', '--volume', f'{save_volume_file}:/mnt',
             '-ti', '--rm', args["--container"], 'bash', '-c',
             ' '.join(pull_debian_source)
         ]
