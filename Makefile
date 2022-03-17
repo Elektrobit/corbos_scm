@@ -50,7 +50,7 @@ build: clean tox
 	# restore original setup.py backed up from sed
 	mv setup.pye setup.py
 	# provide rpm source tarball
-	mv dist/corbos_scm-${version}.tar.gz dist/python-corbos_scm.tar.gz
+	mv dist/corbos_scm-${version}.tar.gz dist/python-corbos-scm.tar.gz
 	# update rpm changelog using reference file
 	helper/update_changelog.py --since package/python-corbos_scm.changes > \
 		dist/python-corbos_scm.changes
