@@ -21,10 +21,6 @@ class TestCorbosSCM:
             'ubdevtools:latest',
             '--package',
             'curl',
-            '--mirror',
-            'some-mirror',
-            '--distribution',
-            'ubuntu',
             '--outdir',
             'obs_out'
         ]
@@ -62,10 +58,11 @@ class TestCorbosSCM:
             ),
             call(
                 [
-                    'podman', 'run', '--volume', 'tmpdir/volume:/tmp',
+                    'podman', 'run', '--volume', 'tmpdir/volume:/mnt',
                     '-ti', '--rm', 'ubdevtools:latest',
                     'bash', '-c',
-                    'cd /tmp && apt update && apt source curl'
+                    'cd /mnt && apt update && apt source curl && '
+                    'find -maxdepth 1 -type d -not -path . | xargs rm -rf'
                 ]
             )
         ]
